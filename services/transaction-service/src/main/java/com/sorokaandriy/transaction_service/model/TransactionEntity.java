@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 @Data
 @AllArgsConstructor
@@ -12,18 +13,18 @@ import lombok.NoArgsConstructor;
 @Builder
 @Entity
 @Table(name = "transactions")
+@Validated
 public class TransactionEntity {
-
 
     @Id
     private String id;
-    private String userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id",nullable = false)
+    private UserEntity userId;
     private double amount;
     private Long timestamp;
     @Enumerated(EnumType.STRING)
     private TransactionalStatus status;
-
-
 
 
 }

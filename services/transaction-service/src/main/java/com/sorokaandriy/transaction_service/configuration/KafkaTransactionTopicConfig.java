@@ -11,7 +11,7 @@ public class KafkaTransactionTopicConfig {
     @Bean
     public NewTopic transactionTopic(){
         return TopicBuilder
-                .name("transaction-topic")
+                .name("raw-transactions")
                 .build();
     }
 }

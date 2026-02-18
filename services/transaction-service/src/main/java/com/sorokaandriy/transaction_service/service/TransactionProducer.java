@@ -22,7 +22,7 @@ public class TransactionProducer {
         log.info("sending transaction {}",transactionEvent);
         Message<TransactionEvent> message = MessageBuilder
                 .withPayload(transactionEvent)
-                .setHeader(KafkaHeaders.TOPIC,"transaction-topic")
+                .setHeader(KafkaHeaders.TOPIC,"raw-transactions")
                 .build();
         kafkaTemplate.send(message);
     }
