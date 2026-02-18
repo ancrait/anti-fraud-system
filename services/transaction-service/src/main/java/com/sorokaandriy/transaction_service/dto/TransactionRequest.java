@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Positive;
 public record TransactionRequest(
         @NotBlank(message = "User id cannot be empty")
         String userId,
-        @NotBlank(message = "Amount cannot be empty")
         @Positive(message = "Amount should be positive")
         @DecimalMin(value = "0.01", message = "Minimum transaction amount is 0.01")
         double amount

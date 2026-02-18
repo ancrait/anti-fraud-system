@@ -16,6 +16,7 @@ public class TransactionMapper {
         return TransactionEntity.builder()
                 .id(UUID.randomUUID().toString())
                 .userId(request.userId())
+                .amount(request.amount())
                 .timestamp(System.currentTimeMillis())
                 .status(TransactionalStatus.PENDING)
                 .build();
