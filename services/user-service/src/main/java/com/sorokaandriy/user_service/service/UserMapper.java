@@ -1,5 +1,6 @@
 package com.sorokaandriy.user_service.service;
 
+import com.sorokaandriy.user_service.dto.UpdateUserEntityRequest;
 import com.sorokaandriy.user_service.dto.UserEntityRequest;
 import com.sorokaandriy.user_service.model.UserEntity;
 import org.springframework.stereotype.Service;
@@ -17,5 +18,15 @@ public class UserMapper {
                 .balance(request.balance())
                 .email(request.email())
                 .build();
+    }
+
+    public UserEntity fromUpdateToUser(UserEntity user, UpdateUserEntityRequest request) {
+        user.setName(request.name());
+        user.setSurname(request.surname());
+        user.setBalance(request.balance());
+        user.setRiskLevel(request.riskLevel());
+        user.setDailyLimits(request.dailyLimits());
+
+        return user;
     }
 }
