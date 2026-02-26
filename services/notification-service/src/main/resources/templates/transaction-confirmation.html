@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Підтвердження транзакції</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { width: 80%; margin: 20px auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        .header { background-color: #f8f9fa; padding: 10px; text-align: center; border-bottom: 1px solid #ddd; }
+        .content { margin: 20px 0; }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #28a745;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .footer { font-size: 12px; color: #777; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>AntiFraud System Security</h2>
+    </div>
+    <div class="content">
+        <p>Вітаємо, <strong th:text="${userName} + ' ' + ${surname}">User</strong>!</p>
+        <p>Була ініційована транзакція, яка потребує вашого підтвердження:</p>
+        <ul>
+            <li><strong>Сума:</strong> <span th:text="${amount}">0.00</span> грн</li>
+            <li><strong>Дата:</strong> <span th:text="${date}">2026-01-01</span></li>
+            <li><strong>ID транзакції:</strong> <span th:text="${transactionId}">ID</span></li>
+        </ul>
+        <p>Якщо ви здійснювали цю операцію, будь ласка, натисніть кнопку нижче для підтвердження:</p>
+        <div style="text-align: center;">
+            <a th:href="${confirmationUrl}" class="button">Підтвердити транзакцію</a>
+        </div>
+        <p style="color: #dc3545;"><strong>Важливо:</strong> Якщо ви не ініціювали цей платіж, проігноруйте цей лист і негайно зверніться до служби підтримки.</p>
+    </div>
+    <div class="footer">
+        Цей лист надіслано автоматично. Будь ласка, не відповідайте на нього.
+    </div>
+</div>
+</body>
+</html>
