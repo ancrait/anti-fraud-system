@@ -13,6 +13,17 @@ import java.util.UUID;
 @Service
 public class TransactionMapper {
     
+    public TransactionEntity fromTransactionRequestToSuccessTransactionWithLevelRiskLow(
+            @Valid TransactionRequest request, UserEntity user) {
+        return TransactionEntity.builder()
+                .id(UUID.randomUUID().toString())
+                .userId(user)
+                .amount(request.amount())
+                .timestamp(System.currentTimeMillis())
+                .status(TransactionalStatus.APPROVED)
+                .build();
+    }
+
     public TransactionEntity fromTransactionRequestToSuccessTransaction(
             @Valid TransactionRequest request, UserEntity user) {
         return TransactionEntity.builder()

@@ -58,6 +58,13 @@ public class TransactionService {
         limitTransaction(request,user);
 
         //save transaction
+
+        if (user.getRiskLevel() == RiskLevel.LOW){
+            TransactionEntity transaction = mapper.fromTransactionRequestToSuccessTransactionWithLevelRiskLow(request,user);
+            repository.save(transaction);
+            return String.format("Transaction with id %s is approved", transaction.getId());
+        }
+
         TransactionEntity transaction = mapper.fromTransactionRequestToSuccessTransaction(request,user);
         repository.save(transaction);
         transactionProducer.sendTransactionEvent(mapper.fromTransactionToEvent(transaction));
