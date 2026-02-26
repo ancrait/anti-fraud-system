@@ -49,6 +49,10 @@ public class UserService {
             redisTemplate.addUserToBlacklist(userId);
         }
 
+        else if(UserStatus.valueOf(userStatus) == UserStatus.ACTIVE){
+            redisTemplate.removeUserFromBlacklist(userId);
+        }
+
             return repository.save(user);
     }
 }
