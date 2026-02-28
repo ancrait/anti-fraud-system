@@ -1,4 +1,4 @@
-package com.sorokaandriy.transaction_service.service;
+package com.sorokaandriy.transaction_service.kafka;
 
 import com.sorokaandriy.transaction_service.dto.TransactionEvent;
 import lombok.extern.slf4j.Slf4j;

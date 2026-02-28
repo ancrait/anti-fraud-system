@@ -1,11 +1,15 @@
 package com.sorokaandriy.transaction_service.service;
 
 import com.sorokaandriy.transaction_service.dto.TransactionRequest;
+import com.sorokaandriy.transaction_service.dto.TransactionResult;
 import com.sorokaandriy.transaction_service.exception.*;
+import com.sorokaandriy.transaction_service.kafka.TransactionProducer;
 import com.sorokaandriy.transaction_service.model.*;
 import com.sorokaandriy.transaction_service.repository.TransactionRepository;
 import com.sorokaandriy.transaction_service.repository.UserRepository;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.errors.TransactionalIdNotFoundException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -14,11 +18,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class TransactionService {
 
     private final TransactionRepository repository;
@@ -97,7 +101,7 @@ public class TransactionService {
             user.setUserStatus(UserStatus.BLOCKED);
             userRepository.save(user);
             throw new TransactionLimitException(
-                    "You are blocked. Too many requests. ");
+                    "You are blocked. Too many requests.");
         }
 
     }
@@ -115,6 +119,33 @@ public class TransactionService {
 
         if (sumOfTodayTransactions + currentAmount > user.getDailyLimits().doubleValue()) {
             throw new DailyLimitsException("Daily limit exhausted");
+        }
+    }
+
+    public void transactionResult(TransactionResult transactionResult){
+
+        TransactionEntity transaction = repository.findById(transactionResult.transactionId())
+                .orElseThrow(() -> new TransactionalNotFoundException(
+                        "Transaction with id " + transactionResult.transactionId() + " not found"));
+
+        if (transactionResult.status() == TransactionalStatus.APPROVED){
+            transaction.setStatus(TransactionalStatus.APPROVED);
+
+            UserEntity userEntity = transaction.getUserId();
+
+            userEntity.setDailyLimits(userEntity.getDailyLimits().subtract(
+                    BigDecimal.valueOf(transaction.getAmount())));
+
+            userEntity.setBalance(userEntity.getBalance().subtract(
+                    BigDecimal.valueOf(transaction.getAmount())));
+
+            repository.save(transaction);
+            userRepository.save(userEntity);
+            log.info("Approved transaction");
+        }
+        else if(transactionResult.status() == TransactionalStatus.REJECTED){
+            transaction.setStatus(TransactionalStatus.REJECTED);
+            log.info("rejected transaction");
         }
     }
 
