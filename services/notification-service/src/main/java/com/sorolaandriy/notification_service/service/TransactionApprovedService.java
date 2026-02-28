@@ -4,6 +4,7 @@ import com.sorolaandriy.notification_service.dto.TransactionalStatus;
 import com.sorolaandriy.notification_service.exception.TokenTimeOutException;
 import com.sorolaandriy.notification_service.kafka.TransactionEvent;
 import com.sorolaandriy.notification_service.kafka.TransactionProducer;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,7 @@ public class TransactionApprovedService {
         this.producer = producer;
     }
 
-    public String approvedTransaction(String token) {
+    public String approveTransaction(String token) {
 
         String transactionId = redisTemplate.opsForValue().get(token);
 
@@ -26,20 +27,37 @@ public class TransactionApprovedService {
             throw new TokenTimeOutException("Token expired");
         }
 
-        TransactionEvent transactionEvent = TransactionEvent.builder()
-                .transactionId(transactionId)
-                .status(TransactionalStatus.APPROVED)
-                .build();
-
-        producer.sendTransactionEvent(transactionEvent);
+        sendEvent(transactionId,TransactionalStatus.APPROVED);
 
         redisTemplate.delete(token);
 
         return "Transaction with id " + transactionId + " is approved";
+    }
 
+    public String rejectTransaction(String token) {
 
+        String transactionId = redisTemplate.opsForValue().get(token);
 
+        if (transactionId == null){
+            throw new TokenTimeOutException("Token expired");
+        }
 
+        sendEvent(transactionId,TransactionalStatus.REJECTED);
+
+        redisTemplate.delete(token);
+
+        return "Transaction with id " + transactionId + " is rejected";
+
+    }
+
+    private void sendEvent(String transactionId, TransactionalStatus status){
+
+        TransactionEvent transactionEvent = TransactionEvent.builder()
+                .transactionId(transactionId)
+                .status(status)
+                .build();
+
+        producer.sendTransactionEvent(transactionEvent);
 
 
     }

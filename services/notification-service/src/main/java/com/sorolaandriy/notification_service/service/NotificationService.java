@@ -1,5 +1,6 @@
 package com.sorolaandriy.notification_service.service;
 
+import com.sorolaandriy.notification_service.dto.TransactionalStatus;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -50,7 +51,8 @@ public class NotificationService {
             context.setVariable("amount", amount);
             context.setVariable("date", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
             context.setVariable("transactionId", token);
-            context.setVariable("confirmationUrl", "http://localhost:8083/api/verify?token=" + token);
+            context.setVariable("confirmationUrl", "http://localhost:8083/api/verify/approve?token=" + token);
+            context.setVariable("rejectUrl", "http://localhost:8083/api/verify/reject?token=");
 
 
             String htmlContent = templateEngine.process("transaction-confirmation", context);

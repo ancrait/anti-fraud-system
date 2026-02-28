@@ -34,8 +34,16 @@
             <li><strong>ID транзакції:</strong> <span th:text="${transactionId}">ID</span></li>
         </ul>
         <p>Якщо ви здійснювали цю операцію, будь ласка, натисніть кнопку нижче для підтвердження:</p>
-        <div style="text-align: center;">
-            <a th:href="${confirmationUrl}" class="button">Підтвердити транзакцію</a>
+        <div style="text-align: center; margin-top: 30px;">
+            <a th:href="${confirmUrl}"
+               style="background-color: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; margin-right: 10px;">
+                ТАК, ЦЕ Я (ПІДТВЕРДИТИ)
+            </a>
+
+            <a th:href="${rejectUrl}"
+               style="background-color: #dc3545; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px;">
+                НІ, ЦЕ НЕ Я (ЗАБЛОКУВАТИ)
+            </a>
         </div>
         <p style="color: #dc3545;"><strong>Важливо:</strong> Якщо ви не ініціювали цей платіж, проігноруйте цей лист і негайно зверніться до служби підтримки.</p>
     </div>

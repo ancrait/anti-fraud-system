@@ -17,10 +17,17 @@ public class NotificationController {
         this.service = service;
     }
 
-    @PutMapping
-    public ResponseEntity<String> approvedTransaction(
+    @PutMapping("/approve")
+    public ResponseEntity<String> approveTransaction(
             @RequestParam String token
     ){
-        return ResponseEntity.ok(service.approvedTransaction(token));
+        return ResponseEntity.ok(service.approveTransaction(token));
+    }
+
+    @PutMapping("/reject")
+    public ResponseEntity<String> rejectTransaction(
+            @RequestParam String token
+    ){
+        return ResponseEntity.ok(service.rejectTransaction(token));
     }
 }
