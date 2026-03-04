@@ -9,7 +9,6 @@ import com.sorokaandriy.transaction_service.repository.TransactionRepository;
 import com.sorokaandriy.transaction_service.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.errors.TransactionalIdNotFoundException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -55,7 +55,7 @@ public class TransactionService {
                     "User deny transaction because of user status " + user.getUserStatus());
         }
 
-        raiseDailyLimits(user);
+        checkLastTransaction(user);
 
         checkDailyLimits(user,request.amount());
 
@@ -65,6 +65,8 @@ public class TransactionService {
 
         if (user.getRiskLevel() == RiskLevel.LOW){
             TransactionEntity transaction = mapper.fromTransactionRequestToSuccessTransactionWithLevelRiskLow(request,user);
+            updateBalance(user,request.amount());
+            updateDailyLimits(user, request.amount());
             repository.save(transaction);
             return String.format("Transaction with id %s is approved", transaction.getId());
         }
@@ -72,20 +74,28 @@ public class TransactionService {
         TransactionEntity transaction = mapper.fromTransactionRequestToSuccessTransaction(request,user);
         repository.save(transaction);
         transactionProducer.sendTransactionEvent(mapper.fromTransactionToEvent(transaction));
-        return String.format("Transaction with id %s is pending", transaction.getId());
+        return String.format("Transaction with id " + transaction.getId() + " has been processed");
 
     }
 
-
-    private void raiseDailyLimits(UserEntity user){
-        if (user.getRiskLevel() == RiskLevel.LOW){
-            user.setDailyLimits(user.getDailyLimits().multiply(new BigDecimal("1.5")));
+    private void updateBalance(UserEntity user, double amount) {
+        if (user.getBalance().subtract(new BigDecimal(amount)).compareTo(BigDecimal.ZERO) >= 0){
+            user.setBalance(user.getBalance().subtract(new BigDecimal(amount)));
+            userRepository.save(user);
         }
         else {
-            user.setDailyLimits(user.getDailyLimits().divide(new BigDecimal("1.5")));
+            throw new BalanceNotEnoughException("You do not have enough funds in your account.");
         }
+    }
 
-        userRepository.save(user);
+    private void updateDailyLimits(UserEntity user, double amount) {
+        if (user.getDailyLimits().subtract(new BigDecimal(amount)).compareTo(BigDecimal.ZERO) >= 0){
+            user.setDailyLimits(user.getDailyLimits().subtract(new BigDecimal(amount)));
+            userRepository.save(user);
+        }
+        else {
+            throw new BalanceNotEnoughException("You do not have enough funds in your account.");
+        }
     }
 
 
@@ -133,11 +143,9 @@ public class TransactionService {
 
             UserEntity userEntity = transaction.getUserId();
 
-            userEntity.setDailyLimits(userEntity.getDailyLimits().subtract(
-                    BigDecimal.valueOf(transaction.getAmount())));
+            updateDailyLimits(userEntity,transaction.getAmount());
 
-            userEntity.setBalance(userEntity.getBalance().subtract(
-                    BigDecimal.valueOf(transaction.getAmount())));
+            updateBalance(userEntity,transaction.getAmount());
 
             repository.save(transaction);
             userRepository.save(userEntity);
@@ -147,6 +155,44 @@ public class TransactionService {
             transaction.setStatus(TransactionalStatus.REJECTED);
             log.info("rejected transaction");
         }
+    }
+
+    private void checkLastTransaction(UserEntity user){
+
+        Optional<TransactionEntity> lastTransaction = repository
+                .findFirstByUserId_IdOrderByTimestampDesc(user.getId());
+
+        if (lastTransaction.isEmpty()){
+            return;
+        }
+
+        TransactionEntity transaction = lastTransaction.get();
+
+        LocalDate convertIntoLocalDate = Instant.ofEpochMilli(transaction.getTimestamp())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+
+        if (!convertIntoLocalDate.equals(LocalDate.now())){
+            updateDailyLimits(user);
+        }
+
+    }
+
+    private void updateDailyLimits(UserEntity user) {
+
+         if (user.getRiskLevel() == RiskLevel.LOW){
+             user.setDailyLimits(new BigDecimal("15000"));
+         }
+         else if (user.getRiskLevel() == RiskLevel.MEDIUM){
+             user.setDailyLimits(new BigDecimal("10000"));
+         }
+         else {
+             user.setDailyLimits(new BigDecimal("5000"));
+         }
+
+         userRepository.save(user);
+
     }
 
 

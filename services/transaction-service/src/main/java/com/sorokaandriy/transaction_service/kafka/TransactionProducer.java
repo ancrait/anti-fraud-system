@@ -20,9 +20,12 @@ public class TransactionProducer {
 
     public void sendTransactionEvent(TransactionEvent transactionEvent){
         log.info("sending transaction {}",transactionEvent);
+
+        String key = String.valueOf(transactionEvent.userId());
         Message<TransactionEvent> message = MessageBuilder
                 .withPayload(transactionEvent)
                 .setHeader(KafkaHeaders.TOPIC,"raw-transactions")
+                .setHeader(KafkaHeaders.KEY,key)
                 .build();
         kafkaTemplate.send(message);
     }
