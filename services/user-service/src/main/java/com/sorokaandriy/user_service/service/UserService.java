@@ -7,6 +7,11 @@ import com.sorokaandriy.user_service.model.UserStatus;
 import com.sorokaandriy.user_service.repository.UserRepository;
 import jakarta.persistence.Id;
 import org.jspecify.annotations.Nullable;
+import org.springframework.boot.data.autoconfigure.web.DataWebProperties;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.sorokaandriy.user_service.exception.UserNotFoundException;
 
@@ -24,6 +29,13 @@ public class UserService {
     }
 
 
+
+    public @Nullable Page<UserEntity> findAll(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page,size,Sort.by(sortBy));
+        return repository.findAll(pageable);
+    }
+
+
     public @Nullable UserEntity createUser(UserEntityRequest request) {
         UserEntity user = mapper.fromUserRequestToUser(request);
         return repository.save(user);
@@ -38,21 +50,31 @@ public class UserService {
         return repository.save(mapper.fromUpdateToUser(user,request));
     }
 
-    public @Nullable UserEntity updateStatus(String userId, String userStatus) {
+    public @Nullable UserEntity updateStatus(String userId, UserStatus userStatus) {
         UserEntity user = repository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User with id " +
                         userId + " not found"));
 
-        user.setUserStatus(UserStatus.valueOf(userStatus));
+        user.setUserStatus(userStatus);
 
-        if(UserStatus.valueOf(userStatus) == UserStatus.BLOCKED){
+        if(userStatus == UserStatus.BLOCKED){
             redisTemplate.addUserToBlacklist(userId);
         }
 
-        else if(UserStatus.valueOf(userStatus) == UserStatus.ACTIVE){
+        else if(userStatus == UserStatus.ACTIVE){
             redisTemplate.removeUserFromBlacklist(userId);
         }
 
             return repository.save(user);
     }
+
+    public @Nullable String deleteUser(String userId) {
+        UserEntity user = repository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with id " +
+                        userId + " not found"));
+        repository.delete(user);
+        return "User with id " + userId + " was successfully deleted";
+    }
+
+
 }
