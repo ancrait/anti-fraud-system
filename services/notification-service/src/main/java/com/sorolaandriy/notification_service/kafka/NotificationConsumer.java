@@ -19,7 +19,7 @@ public class NotificationConsumer {
         this.notificationService = notificationService;
     }
 
-    @KafkaListener(topics = "raw-transactions",groupId = "notification-group")
+    @KafkaListener(topics = "raw-transactions", groupId = "notification-group")
     public void consumeTransaction(TransactionConfirmation confirmation){
         log.info("Consuming transaction from kafka {}", confirmation);
         notificationService.sendTransactionConfirmation(
