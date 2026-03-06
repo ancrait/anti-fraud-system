@@ -30,30 +30,33 @@ public class TransactionService {
     private final TransactionProducer transactionProducer;
     private final StringRedisTemplate redisTemplate;
     private final UserRepository userRepository;
+    private final UserRedisTemplate userRedisTemplate;
 
     private final static int MAX_TRANSACTION_PER_MINUTE = 5;
     private final static String KEY_NAME = "rate_limit";
 
     public TransactionService(TransactionRepository repository, TransactionMapper mapper,
-                              TransactionProducer transactionProducer, StringRedisTemplate redisTemplate, UserRepository userRepository) {
+                              TransactionProducer transactionProducer, StringRedisTemplate redisTemplate, UserRepository userRepository, UserRedisTemplate userRedisTemplate) {
         this.repository = repository;
         this.mapper = mapper;
         this.transactionProducer = transactionProducer;
         this.redisTemplate = redisTemplate;
         this.userRepository = userRepository;
+        this.userRedisTemplate = userRedisTemplate;
     }
 
-    public String createTransaction(@Valid TransactionRequest request) {
+
+    public String createTransaction(TransactionRequest request) {
+
+        if (userRedisTemplate.isUserBlocked(request.userId())){
+            throw new UserDeniedTransactionException(
+                    "User deny transaction because of user status blocked");
+        }
 
         UserEntity user = userRepository.findById(
                 request.userId()).orElseThrow(() -> new UserNotFoundException(
                 "User with id " + request.userId() + " not found"));
 
-
-        if (user.getUserStatus() == UserStatus.BLOCKED){
-            throw new UserDeniedTransactionException(
-                    "User deny transaction because of user status " + user.getUserStatus());
-        }
 
         checkLastTransaction(user);
 
