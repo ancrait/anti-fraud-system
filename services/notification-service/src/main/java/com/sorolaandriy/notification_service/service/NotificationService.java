@@ -51,8 +51,8 @@ public class NotificationService {
             context.setVariable("amount", amount);
             context.setVariable("date", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
             context.setVariable("transactionId", token);
-            context.setVariable("confirmationUrl", "http://localhost:8083/api/verify/approve?token=" + token);
-            context.setVariable("rejectUrl", "http://localhost:8083/api/verify/reject?token=" + token);
+            context.setVariable("confirmationUrl", "http://localhost:8085/api/verify/approve?token=" + token);
+            context.setVariable("rejectUrl", "http://localhost:8085/api/verify/reject?token=" + token);
 
 
             String htmlContent = templateEngine.process("transaction-confirmation", context);

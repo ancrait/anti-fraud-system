@@ -4,11 +4,13 @@ import com.sorolaandriy.notification_service.dto.TransactionalStatus;
 import com.sorolaandriy.notification_service.exception.TokenTimeOutException;
 import com.sorolaandriy.notification_service.kafka.TransactionEvent;
 import com.sorolaandriy.notification_service.kafka.TransactionProducer;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class TransactionApprovedService {
 
     private final StringRedisTemplate redisTemplate;
@@ -56,6 +58,7 @@ public class TransactionApprovedService {
                 .transactionId(transactionId)
                 .status(status)
                 .build();
+        log.info("sending transaction to transaction service {}",transactionEvent);
 
         producer.sendTransactionEvent(transactionEvent);
 
