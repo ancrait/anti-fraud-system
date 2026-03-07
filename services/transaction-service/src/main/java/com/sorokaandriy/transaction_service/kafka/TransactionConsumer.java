@@ -19,7 +19,10 @@ public class TransactionConsumer {
 
     @KafkaListener(topics = "transaction-result", groupId = "transaction-group")
     public void getTransactionResult(TransactionResult transactionResult){
-        log.info("Consuming transaction from notification service with id {}", transactionResult.transactionId());
+        log.info("Received message from Kafka: {}", transactionResult);
+        log.info("Transaction ID: {}, Status: {}",
+                transactionResult.transactionId(),
+                transactionResult.status());
         service.transactionResult(transactionResult);
     }
 }

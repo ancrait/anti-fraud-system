@@ -136,26 +136,41 @@ public class TransactionService {
     @Transactional
     public void transactionResult(TransactionResult transactionResult){
 
+        log.info("Processing transaction result: ID={}, Status={}",
+                transactionResult.transactionId(), transactionResult.status());
+
         TransactionEntity transaction = repository.findById(transactionResult.transactionId())
                 .orElseThrow(() -> new TransactionalNotFoundException(
                         "Transaction with id " + transactionResult.transactionId() + " not found"));
+
+
+        log.info("Found transaction: ID={}, Current Status={}, Amount={}",
+                transaction.getId(), transaction.getStatus(), transaction.getAmount());
 
         if (transactionResult.status() == TransactionalStatus.APPROVED){
             transaction.setStatus(TransactionalStatus.APPROVED);
 
             UserEntity userEntity = transaction.getUserId();
+            log.info("User before update: Balance={}, DailyLimit={}",
+                    userEntity.getBalance(), userEntity.getDailyLimits());
 
             updateDailyLimits(userEntity,transaction.getAmount());
+            log.info("Daily limits updated successfully");
 
             updateBalance(userEntity,transaction.getAmount());
+            log.info("Balance updated successfully");
 
             repository.save(transaction);
             userRepository.save(userEntity);
-            log.info("Approved transaction");
+
+            log.info("Approved transaction: ID={}", transaction.getId());
+            log.info("User after update: Balance={}, DailyLimit={}",
+                    userEntity.getBalance(), userEntity.getDailyLimits());
         }
         else if(transactionResult.status() == TransactionalStatus.REJECTED){
             transaction.setStatus(TransactionalStatus.REJECTED);
             log.info("rejected transaction");
+            repository.save(transaction);
         }
     }
 
