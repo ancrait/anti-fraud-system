@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -56,6 +57,11 @@ public class TransactionService {
         UserEntity user = userRepository.findById(
                 request.userId()).orElseThrow(() -> new UserNotFoundException(
                 "User with id " + request.userId() + " not found"));
+
+        if (user.getUserStatus() == UserStatus.BLOCKED){
+            throw new UserDeniedTransactionException(
+                    "User deny transaction because of user status blocked");
+        }
 
 
         checkLastTransaction(user);
@@ -111,6 +117,7 @@ public class TransactionService {
         }
 
         if (count != null && count > MAX_TRANSACTION_PER_MINUTE){
+            userRedisTemplate.addUserToBlacklist(user.getId());
             user.setUserStatus(UserStatus.BLOCKED);
             userRepository.save(user);
             throw new TransactionLimitException(
@@ -120,21 +127,13 @@ public class TransactionService {
     }
 
     private void checkDailyLimits(UserEntity user, double currentAmount) {
-        List<TransactionEntity> transactions = repository.findAllByUserId_Id(user.getId());
-        LocalDate today = LocalDate.now();
 
-        double sumOfTodayTransactions = transactions.stream()
-                .filter(t -> LocalDateTime.ofInstant(Instant.ofEpochMilli(t.getTimestamp()),
-                        ZoneId.systemDefault()).toLocalDate().equals(today))
-                .filter(t -> t.getStatus() != TransactionalStatus.REJECTED)
-                .mapToDouble(TransactionEntity::getAmount)
-                .sum();
-
-        if (sumOfTodayTransactions + currentAmount > user.getDailyLimits().doubleValue()) {
-            throw new DailyLimitsException("Daily limit exhausted");
+        if (BigDecimal.valueOf(currentAmount).compareTo(user.getDailyLimits()) > 0) {
+            throw new DailyLimitsException("Daily limit exhausted. Remaining: " + user.getDailyLimits());
         }
     }
 
+    @Transactional
     public void transactionResult(TransactionResult transactionResult){
 
         TransactionEntity transaction = repository.findById(transactionResult.transactionId())

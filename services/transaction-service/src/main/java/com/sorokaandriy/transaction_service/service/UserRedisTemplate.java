@@ -13,13 +13,22 @@ import tools.jackson.databind.ObjectMapper;
 public class UserRedisTemplate {
 
     private final StringRedisTemplate redisTemplate;
+    private final static String BLACKLIST_KEY = "blacklisted_users";
 
     public UserRedisTemplate(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
     public boolean isUserBlocked(String userId) {
-        Boolean blocked = redisTemplate.hasKey(userId);
-        return blocked != null && blocked;
+        Boolean isMember = redisTemplate.opsForSet().isMember(BLACKLIST_KEY,userId);
+        return isMember != null && isMember;
+    }
+
+    public void addUserToBlacklist(String userId){
+        redisTemplate.opsForSet().add(BLACKLIST_KEY,userId);
+    }
+
+    public void removeUserFromBlacklist(String userId){
+        redisTemplate.opsForSet().remove(BLACKLIST_KEY,userId);
     }
 }
