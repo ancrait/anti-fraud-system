@@ -6,7 +6,7 @@ A microservices-based anti-fraud system designed for real-time transaction monit
 
 The project consists of three core microservices communicating asynchronously via Apache Kafka:
 
-1.  **User Service (Port 8081)**:
+1.  **User Service (Port 8082)**:
     * Manages user profiles, including balance, status (`ACTIVE`, `BLOCKED`), and risk levels (`LOW`, `MEDIUM`, `HIGH`).
     * Synchronizes a "blacklist" of blocked users to Redis for fast cross-service verification.
 2.  **Transaction Service (Port 8083)**:
@@ -65,7 +65,7 @@ mvn spring-boot:run
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `localhost:8081/api/users` | **POST** | Create a new user |
+| `localhost:8082/api/users` | **POST** | Create a new user |
 | `localhost:8083/api/transactions` | **POST** | Initiate a transaction |
 | `localhost:8085/api/verify/approve?token=...` | **GET** | Approve transaction via email token |
 
